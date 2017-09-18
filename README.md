@@ -4,4 +4,4 @@
 
 # utils
 
-Utility functions that is shared in between the go based micro services of Möjligministeriet.
+Utility functions that is shared in between the go based micro services of Möjlighetsministeriet.
