@@ -9,7 +9,7 @@ import (
 	"net/http"
 )
 
-// FetchPublicKey will fetch a PEM encoded public RSA key over HTTP and return it's struct
+// FetchPublicKey will fetch a PEM encoded §public RSA key over HTTP and return it's struct
 func FetchPublicKey(url string) (publicKey *rsa.PublicKey, err error) {
 	response, err := http.Get(url)
 	if err != nil {

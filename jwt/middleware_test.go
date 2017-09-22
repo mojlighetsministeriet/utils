@@ -1,4 +1,4 @@
-package token_test
+package jwt_test
 
 import (
 	"crypto/rand"

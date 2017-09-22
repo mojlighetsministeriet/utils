@@ -31,8 +31,8 @@ func Generate(issuer string, privateKey *rsa.PrivateKey, account entity.Account)
 }
 
 // ParseIfValid return a parsed JWT token if it is valid
-func ParseIfValid(publicKey *rsa.PublicKey, token []byte) (token josejwt.JWT, err error) {
-	token, err = jws.ParseJWT(token)
+func ParseIfValid(publicKey *rsa.PublicKey, tokenData []byte) (token josejwt.JWT, err error) {
+	token, err = jws.ParseJWT(tokenData)
 	if err != nil {
 		return
 	}
