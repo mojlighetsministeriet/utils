@@ -8,19 +8,6 @@ import (
 	"github.com/labstack/echo"
 )
 
-// GetTokenFromContext will extract the token bytes from the HTTP request header connected to a echo.Context object
-func GetTokenFromContext(context echo.Context) (result []byte) {
-	token := context.Request().Header.Get("Authorization")
-	token = strings.Replace(token, "Bearer", "", -1)
-	token = strings.Trim(strings.Replace(token, "bearer", "", -1), " ")
-
-	if len(token) > 20 {
-		result = []byte(token)
-	}
-
-	return
-}
-
 // RequiredRoleMiddleware is a echo middleware that will allow to restrict access to a JWT token containing a specific user role
 func RequiredRoleMiddleware(publicKey *rsa.PublicKey, requiredRole string) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {

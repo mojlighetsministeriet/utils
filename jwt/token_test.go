@@ -3,8 +3,10 @@ package jwt_test
 import (
 	"crypto/rand"
 	"crypto/rsa"
+	"net/http/httptest"
 	"testing"
 
+	"github.com/labstack/echo"
 	"github.com/mojlighetsministeriet/identity-provider/entity"
 	"github.com/mojlighetsministeriet/utils/jwt"
 	uuid "github.com/satori/go.uuid"
@@ -59,4 +61,55 @@ func TestFailParseIfValidWithBadPublicKey(test *testing.T) {
 	parsedToken, err := jwt.ParseIfValid(&wrongPrivateKey.PublicKey, accessToken)
 	assert.Error(test, err)
 	assert.Equal(test, false, parsedToken.Claims().Has("email"))
+}
+
+func TestGetClaimsFromContextIfValid(test *testing.T) {
+	privateKey, err := rsa.GenerateKey(rand.Reader, 1024)
+	assert.NoError(test, err)
+
+	account := entity.Account{
+		ID:    uuid.NewV4().String(),
+		Email: "tech+testing@mojlighetsministerietest.se",
+		Roles: []string{"user"},
+	}
+
+	accessToken, err := jwt.Generate("test-service", privateKey, account)
+	assert.NoError(test, err)
+
+	router := echo.New()
+	request := httptest.NewRequest(echo.GET, "/", nil)
+	request.Header.Add("Authorization", "Bearer "+string(accessToken))
+	recorder := httptest.NewRecorder()
+	context := router.NewContext(request, recorder)
+
+	claims, err := jwt.GetClaimsFromContextIfValid(&privateKey.PublicKey, context)
+	assert.NoError(test, err)
+	assert.Equal(test, "tech+testing@mojlighetsministerietest.se", claims.Get("email"))
+}
+
+func TestWithInvalidKeyFailToGetClaimsFromContextIfValid(test *testing.T) {
+	privateKey, err := rsa.GenerateKey(rand.Reader, 1024)
+	assert.NoError(test, err)
+
+	account := entity.Account{
+		ID:    uuid.NewV4().String(),
+		Email: "tech+testing@mojlighetsministerietest.se",
+		Roles: []string{"user"},
+	}
+
+	accessToken, err := jwt.Generate("test-service", privateKey, account)
+	assert.NoError(test, err)
+
+	router := echo.New()
+	request := httptest.NewRequest(echo.GET, "/", nil)
+	request.Header.Add("Authorization", "Bearer "+string(accessToken))
+	recorder := httptest.NewRecorder()
+	context := router.NewContext(request, recorder)
+
+	wrongPrivateKey, err := rsa.GenerateKey(rand.Reader, 1024)
+	assert.NoError(test, err)
+
+	claims, err := jwt.GetClaimsFromContextIfValid(&wrongPrivateKey.PublicKey, context)
+	assert.Error(test, err)
+	assert.Equal(test, nil, claims.Get("email"))
 }
