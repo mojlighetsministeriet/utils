@@ -6,30 +6,39 @@ import (
 	"time"
 
 	"github.com/labstack/echo"
-	"github.com/mojlighetsministeriet/identity-provider/entity"
 
 	"github.com/SermoDigital/jose/crypto"
 	"github.com/SermoDigital/jose/jws"
 	josejwt "github.com/SermoDigital/jose/jwt"
 )
 
-// Generate a new JWT token from a user
-func Generate(issuer string, privateKey *rsa.PrivateKey, account entity.Account) (serializedToken []byte, err error) {
+// Account describes an account used to generate a token
+type Account interface {
+	GetID() string
+	GetEmail() string
+	GetRolesSerialized() string
+}
+
+// GenerateWithCustomExpiration generates a new JWT token from an account with a custom expiration time
+func GenerateWithCustomExpiration(issuer string, privateKey *rsa.PrivateKey, account Account, expiration time.Time) (serializedToken []byte, err error) {
 	claims := jws.Claims{}
 
-	account.BeforeSave()
-
-	claims.SetExpiration(time.Now().Add(time.Duration(60*20) * time.Second))
-	claims.SetSubject(account.ID)
+	claims.SetExpiration(expiration)
+	claims.SetSubject(account.GetID())
 	claims.SetIssuer(issuer)
-	claims.Set("email", account.Email)
-	claims.Set("roles", account.RolesSerialized)
+	claims.Set("email", account.GetEmail())
+	claims.Set("roles", account.GetRolesSerialized())
 
 	token := jws.NewJWT(claims, crypto.SigningMethodRS256)
 
 	serializedToken, err = token.Serialize(privateKey)
 
 	return
+}
+
+// Generate a new JWT token from an account
+func Generate(issuer string, privateKey *rsa.PrivateKey, account Account) ([]byte, error) {
+	return GenerateWithCustomExpiration(issuer, privateKey, account, time.Now().Add(time.Duration(60*20)*time.Second))
 }
 
 // ParseIfValid return a parsed JWT token if it is valid

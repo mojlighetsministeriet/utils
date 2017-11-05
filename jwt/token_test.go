@@ -4,26 +4,44 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/labstack/echo"
-	"github.com/mojlighetsministeriet/identity-provider/entity"
 	"github.com/mojlighetsministeriet/utils/jwt"
 	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 )
 
+type Account struct {
+	ID    string
+	Email string
+	Roles []string
+}
+
+func (account *Account) GetID() string {
+	return account.ID
+}
+
+func (account *Account) GetEmail() string {
+	return account.Email
+}
+
+func (account *Account) GetRolesSerialized() string {
+	return strings.Join(account.Roles, ",")
+}
+
 func TestGenerateAndParseIfValid(test *testing.T) {
 	privateKey, err := rsa.GenerateKey(rand.Reader, 1024)
 	assert.NoError(test, err)
 
-	account := entity.Account{
+	account := Account{
 		ID:    uuid.NewV4().String(),
 		Email: "tech+testing@mojlighetsministerietest.se",
 		Roles: []string{"user"},
 	}
 
-	accessToken, err := jwt.Generate("test-service", privateKey, account)
+	accessToken, err := jwt.Generate("test-service", privateKey, &account)
 	assert.NoError(test, err)
 
 	parsedToken, err := jwt.ParseIfValid(&privateKey.PublicKey, accessToken)
@@ -46,13 +64,13 @@ func TestFailParseIfValidWithBadPublicKey(test *testing.T) {
 	privateKey, err := rsa.GenerateKey(rand.Reader, 1024)
 	assert.NoError(test, err)
 
-	account := entity.Account{
+	account := Account{
 		ID:    uuid.NewV4().String(),
 		Email: "tech+testing@mojlighetsministerietest.se",
 		Roles: []string{"user"},
 	}
 
-	accessToken, err := jwt.Generate("test-service", privateKey, account)
+	accessToken, err := jwt.Generate("test-service", privateKey, &account)
 	assert.NoError(test, err)
 
 	wrongPrivateKey, err := rsa.GenerateKey(rand.Reader, 1024)
@@ -67,13 +85,13 @@ func TestGetClaimsFromContextIfValid(test *testing.T) {
 	privateKey, err := rsa.GenerateKey(rand.Reader, 1024)
 	assert.NoError(test, err)
 
-	account := entity.Account{
+	account := Account{
 		ID:    uuid.NewV4().String(),
 		Email: "tech+testing@mojlighetsministerietest.se",
 		Roles: []string{"user"},
 	}
 
-	accessToken, err := jwt.Generate("test-service", privateKey, account)
+	accessToken, err := jwt.Generate("test-service", privateKey, &account)
 	assert.NoError(test, err)
 
 	router := echo.New()
@@ -91,13 +109,13 @@ func TestWithInvalidKeyFailToGetClaimsFromContextIfValid(test *testing.T) {
 	privateKey, err := rsa.GenerateKey(rand.Reader, 1024)
 	assert.NoError(test, err)
 
-	account := entity.Account{
+	account := Account{
 		ID:    uuid.NewV4().String(),
 		Email: "tech+testing@mojlighetsministerietest.se",
 		Roles: []string{"user"},
 	}
 
-	accessToken, err := jwt.Generate("test-service", privateKey, account)
+	accessToken, err := jwt.Generate("test-service", privateKey, &account)
 	assert.NoError(test, err)
 
 	router := echo.New()

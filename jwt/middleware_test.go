@@ -11,7 +11,6 @@ import (
 	"github.com/SermoDigital/jose/crypto"
 	"github.com/SermoDigital/jose/jws"
 	"github.com/labstack/echo"
-	"github.com/mojlighetsministeriet/identity-provider/entity"
 	"github.com/mojlighetsministeriet/utils/jwt"
 	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
@@ -23,12 +22,12 @@ func TestGetTokenFromContext(test *testing.T) {
 	privateKey, err := rsa.GenerateKey(rand.Reader, 512)
 	assert.NoError(test, err)
 
-	account := entity.Account{
+	account := Account{
 		ID:    uuid.NewV4().String(),
 		Email: "tech+testing@mojlighetsministerietest.se",
 		Roles: []string{"user"},
 	}
-	accessToken, err := jwt.Generate("test-service", privateKey, account)
+	accessToken, err := jwt.Generate("test-service", privateKey, &account)
 	assert.NoError(test, err)
 	request.Header.Set(echo.HeaderAuthorization, "Bearer "+string(accessToken))
 
@@ -67,12 +66,12 @@ func TestRequiredRoleMiddlewareWhenMissingRequiredAdministratorRole(test *testin
 	privateKey, err := rsa.GenerateKey(rand.Reader, 512)
 	assert.NoError(test, err)
 
-	account := entity.Account{
+	account := Account{
 		ID:    uuid.NewV4().String(),
 		Email: "tech+testing@mojlighetsministerietest.se",
 		Roles: []string{"user"},
 	}
-	accessToken, err := jwt.Generate("test-service", privateKey, account)
+	accessToken, err := jwt.Generate("test-service", privateKey, &account)
 	assert.NoError(test, err)
 	request.Header.Set(echo.HeaderAuthorization, "Bearer "+string(accessToken))
 
@@ -94,12 +93,12 @@ func TestRequiredRoleMiddlewareWithRequiredAdministratorRole(test *testing.T) {
 	privateKey, err := rsa.GenerateKey(rand.Reader, 512)
 	assert.NoError(test, err)
 
-	account := entity.Account{
+	account := Account{
 		ID:    uuid.NewV4().String(),
 		Email: "tech+testing@mojlighetsministerietest.se",
 		Roles: []string{"user", "administrator"},
 	}
-	accessToken, err := jwt.Generate("test-service", privateKey, account)
+	accessToken, err := jwt.Generate("test-service", privateKey, &account)
 	assert.NoError(test, err)
 	request.Header.Set(echo.HeaderAuthorization, "Bearer "+string(accessToken))
 
