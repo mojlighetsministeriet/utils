@@ -1,13 +1,16 @@
 package jsonvalidator
 
 import (
-	"fmt"
 	"net/http"
+	"reflect"
+	"regexp"
 	"strings"
 
 	"github.com/labstack/echo"
 	validation "gopkg.in/go-playground/validator.v9"
 )
+
+// TODO: Add extra properties for some validation errors such as min, max, min length, max length explaining what the limits are
 
 // ValidationError is the JSON representation of a validation error
 type ValidationError struct {
@@ -21,9 +24,10 @@ type Validator struct {
 }
 
 func formatPath(path string) string {
-	path = strings.Replace(path, "[", ".", 0)
-	path = strings.Replace(path, "]", ".", 0)
-	fmt.Println("path", path)
+	path = strings.Replace(path, "[", ".", -1)
+	path = strings.Replace(path, "].", ".", -1)
+	stripFirstPathNode := regexp.MustCompile(`^\s*\w+\.`)
+	path = stripFirstPathNode.ReplaceAllString(path, "")
 	return path
 }
 
@@ -48,5 +52,14 @@ func (validator *Validator) Validate(input interface{}) error {
 
 // NewValidator creates a Validator instance that can be added to an echo server e.g. echoServer.Validator = NewValidator()
 func NewValidator() *Validator {
-	return &Validator{validator: validation.New()}
+	validator := &Validator{validator: validation.New()}
+	validator.validator.RegisterTagNameFunc(func(field reflect.StructField) string {
+		name := strings.SplitN(field.Tag.Get("json"), ",", 2)[0]
+		if name == "-" {
+			return ""
+		}
+		return name
+	})
+
+	return validator
 }

@@ -20,7 +20,7 @@ func TestValidate(test *testing.T) {
 }
 
 func TestFailValidateOnInvalidEmail(test *testing.T) {
-	expectedOutput := "code=400, message=[{User.Email email}]"
+	expectedOutput := "code=400, message=[{Email email}]"
 
 	type User struct {
 		Email string `validate:"required,email"`
@@ -36,10 +36,11 @@ func TestFailValidateOnInvalidEmail(test *testing.T) {
 }
 
 func TestFailValidateOnNestedStructure(test *testing.T) {
-	expectedOutput := "code=400, message=[{wheels.1.Radius required} {wheels.2.radius min}]"
+	expectedOutput := "code=400, message=[{wheels.1.radius required} {wheels.2.radius min}]"
 
 	type Wheel struct {
-		Radius float64 `json:"radius" validate:"required,min=2"`
+		Radius        float64 `json:"radius" validate:"required,min=2"`
+		NotSerialized string  `json:"-"`
 	}
 
 	type Car struct {
@@ -60,4 +61,10 @@ func TestFailValidateOnNestedStructure(test *testing.T) {
 	err := structValidator.Validate(car)
 	assert.Error(test, err)
 	assert.Equal(test, expectedOutput, err.Error())
+}
+
+func TestFormatPath(test *testing.T) {
+	expectedOutput := "wheels.1.radius"
+	output := formatPath("Car.wheels[1].radius")
+	assert.Equal(test, expectedOutput, output)
 }
