@@ -1,8 +1,12 @@
 package jsonvalidator
 
 import (
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
+	"github.com/labstack/echo"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,7 +24,7 @@ func TestValidate(test *testing.T) {
 }
 
 func TestFailValidateOnInvalidEmail(test *testing.T) {
-	expectedOutput := "code=400, message=[{Email email}]"
+	expectedOutput := "code=422, message=[{Email email}]"
 
 	type User struct {
 		Email string `validate:"required,email"`
@@ -36,7 +40,7 @@ func TestFailValidateOnInvalidEmail(test *testing.T) {
 }
 
 func TestFailValidateOnNestedStructure(test *testing.T) {
-	expectedOutput := "code=400, message=[{wheels.1.radius required} {wheels.2.radius min}]"
+	expectedOutput := "code=422, message=[{wheels.1.radius required} {wheels.2.radius min}]"
 
 	type Wheel struct {
 		Radius        float64 `json:"radius" validate:"required,min=2"`
@@ -67,4 +71,18 @@ func TestFormatPath(test *testing.T) {
 	expectedOutput := "wheels.1.radius"
 	output := formatPath("Car.wheels[1].radius")
 	assert.Equal(test, expectedOutput, output)
+}
+
+func TestNewMalformedJSONResponse(test *testing.T) {
+	expectedOutput := `{ "message": "Malformed JSON" }`
+
+	service := echo.New()
+	request := httptest.NewRequest(echo.POST, "/", strings.NewReader("{}"))
+	request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	recorder := httptest.NewRecorder()
+	context := service.NewContext(request, recorder)
+	err := NewMalformedJSONResponse(context)
+	assert.NoError(test, err)
+	assert.Equal(test, expectedOutput, recorder.Body.String())
+	assert.Equal(test, http.StatusBadRequest, recorder.Code)
 }

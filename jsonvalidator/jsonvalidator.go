@@ -44,7 +44,7 @@ func (validator *Validator) Validate(input interface{}) error {
 			})
 		}
 
-		return echo.NewHTTPError(http.StatusBadRequest, formattedErrors)
+		return echo.NewHTTPError(422, formattedErrors)
 	}
 
 	return nil
@@ -62,4 +62,9 @@ func NewValidator() *Validator {
 	})
 
 	return validator
+}
+
+// NewMalformedJSONResponse will create a JSON response that indicates a client has sent a JSON body that has syntax errors
+func NewMalformedJSONResponse(context echo.Context) error {
+	return context.JSONBlob(http.StatusBadRequest, []byte(`{ "message": "Malformed JSON" }`))
 }
