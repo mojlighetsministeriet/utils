@@ -3,14 +3,17 @@ package httprequest
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/mojlighetsministeriet/utils"
 )
 
+/*
 // NewClient creates a http client with timeouts set to 10 seconds and TLS config
 func NewClient() (*http.Client, error) {
 	return NewClientWithCustomTimeout(10000)
@@ -38,6 +41,7 @@ func NewClientWithCustomTimeout(millisecondTimeout time.Duration) (client *http.
 
 	return
 }
+*/
 
 // HTTPError implements an error that retains some additional data about the response
 type HTTPError struct {
@@ -47,12 +51,24 @@ type HTTPError struct {
 }
 
 func (err HTTPError) Error() string {
-	return string(err.StatusCode) + " " + http.StatusText(err.StatusCode) + " (" + err.ContentType + "): " + string(err.Body)
+	return strconv.Itoa(err.StatusCode) + " " + http.StatusText(err.StatusCode) + " (" + err.ContentType + "): " + string(err.Body)
 }
 
 // JSONClient extends http.Client by using structs and their validation tags for request/response data
 type JSONClient struct {
 	http.Client
+}
+
+func (client *JSONClient) createRequest(method string, url string, requestBody interface{}) (request *http.Request, err error) {
+	if requestBody == nil {
+		request, err = http.NewRequest(method, url, nil)
+	} else {
+		requestBodyBuffer := new(bytes.Buffer)
+		json.NewEncoder(requestBodyBuffer).Encode(requestBody)
+		request, err = http.NewRequest(method, url, requestBodyBuffer)
+	}
+
+	return
 }
 
 func (client *JSONClient) sendRequest(request *http.Request, responseBody interface{}) (err error) {
@@ -64,7 +80,7 @@ func (client *JSONClient) sendRequest(request *http.Request, responseBody interf
 	}
 
 	buffer, _ := ioutil.ReadAll(response.Body)
-
+	fmt.Println(string(buffer))
 	if response.StatusCode < 200 || response.StatusCode > 299 {
 		err = HTTPError{
 			StatusCode:  response.StatusCode,
@@ -75,14 +91,16 @@ func (client *JSONClient) sendRequest(request *http.Request, responseBody interf
 		return
 	}
 
-	err = json.Unmarshal(buffer, responseBody)
+	if responseBody != nil {
+		err = json.Unmarshal(buffer, responseBody)
+	}
 
 	return
 }
 
 // Get sends a GET request and maps the response to a responseBody struct
 func (client *JSONClient) Get(url string, responseBody interface{}) (err error) {
-	request, err := http.NewRequest("GET", url, nil)
+	request, err := client.createRequest("GET", url, nil)
 	if err != nil {
 		return
 	}
@@ -94,10 +112,7 @@ func (client *JSONClient) Get(url string, responseBody interface{}) (err error) 
 
 // Post sends a POST request with a requestBody struct and maps the response to a responseBody struct
 func (client *JSONClient) Post(url string, requestBody interface{}, responseBody interface{}) (err error) {
-	requestBodyBuffer := new(bytes.Buffer)
-	json.NewEncoder(requestBodyBuffer).Encode(requestBody)
-
-	request, err := http.NewRequest("POST", url, requestBodyBuffer)
+	request, err := client.createRequest("POST", url, requestBody)
 	if err != nil {
 		return
 	}
@@ -109,10 +124,7 @@ func (client *JSONClient) Post(url string, requestBody interface{}, responseBody
 
 // Put sends a PUT request with a requestBody struct and maps the response to a responseBody struct
 func (client *JSONClient) Put(url string, requestBody interface{}, responseBody interface{}) (err error) {
-	requestBodyBuffer := new(bytes.Buffer)
-	json.NewEncoder(requestBodyBuffer).Encode(requestBody)
-
-	request, err := http.NewRequest("PUT", url, requestBodyBuffer)
+	request, err := client.createRequest("PUT", url, requestBody)
 	if err != nil {
 		return
 	}
@@ -124,7 +136,7 @@ func (client *JSONClient) Put(url string, requestBody interface{}, responseBody 
 
 // Delete sends a DELETE request and maps the response to a responseBody struct
 func (client *JSONClient) Delete(url string, responseBody interface{}) (err error) {
-	request, err := http.NewRequest("DELETE", url, nil)
+	request, err := client.createRequest("DELETE", url, nil)
 	if err != nil {
 		return
 	}
