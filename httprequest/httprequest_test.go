@@ -1,14 +1,45 @@
 package httprequest
 
 import (
+	"net/http"
 	"testing"
 
-	"github.com/jarcoal/httpmock"
+	"github.com/labstack/echo"
 	"github.com/stretchr/testify/assert"
 )
 
+func startTestServer() *echo.Echo {
+	server := echo.New()
+	server.HideBanner = true
+
+	server.GET("/", func(context echo.Context) error {
+		return context.JSONBlob(http.StatusOK, []byte("{\"id\":103898330,\"name\":\"utils\"}"))
+	})
+
+	server.POST("/", func(context echo.Context) error {
+		return context.JSONBlob(http.StatusCreated, []byte("{\"id\":103898330,\"name\":\"utils\"}"))
+	})
+
+	server.PUT("/iexist", func(context echo.Context) error {
+		return context.JSONBlob(http.StatusCreated, []byte("{\"id\":103898330,\"name\":\"utils\"}"))
+	})
+
+	server.DELETE("/deleteme", func(context echo.Context) error {
+		return context.JSONBlob(http.StatusOK, []byte("{\"message\":\"Deleted\"}"))
+	})
+
+	go func(server *echo.Echo) {
+		server.Start(":12345")
+	}(server)
+
+	return server
+}
+
 func TestJSONClientGet(test *testing.T) {
-	url := "https://api.github.com/repos/mojlighetsministeriet/utils"
+	server := startTestServer()
+	defer server.Close()
+
+	url := "http://localhost:12345"
 	type Response struct {
 		ID   int    `json:"id"`
 		Name string `json:"name"`
@@ -25,13 +56,10 @@ func TestJSONClientGet(test *testing.T) {
 }
 
 func TestFailJSONClientGetWithNotFoundURL(test *testing.T) {
-	httpmock.Activate()
-	defer httpmock.DeactivateAndReset()
+	server := startTestServer()
+	defer server.Close()
 
-	httpmock.RegisterResponder("GET", "https://mojlighetsministeriet.se",
-		httpmock.NewStringResponder(404, `{"message": "Not Found"}`))
-
-	url := "https://mojlighetsministeriet.se"
+	url := "http://localhost:12345/idonotexist"
 
 	client, err := NewJSONClient()
 	assert.NoError(test, err)
@@ -39,7 +67,7 @@ func TestFailJSONClientGetWithNotFoundURL(test *testing.T) {
 	err = client.Get(url, nil)
 
 	assert.Error(test, err)
-	assert.Equal(test, "404 Not Found (application/json; charset=utf-8): {\"message\":\"Not Found\",\"documentation_url\":\"https://developer.github.com/v3\"}", err.Error())
+	assert.Equal(test, "404 Not Found (application/json; charset=utf-8): {\"message\":\"Not Found\"}", err.Error())
 }
 
 func TestFailJSONClientGetWithBadURL(test *testing.T) {
@@ -62,39 +90,83 @@ func TestFailJSONClientGetWithBadURL(test *testing.T) {
 }
 
 func TestJSONClientDelete(test *testing.T) {
-	url := "https://api.github.com/repos/mojlighetsministeriet/utils"
-	type Response struct {
-		ID   int    `json:"id"`
-		Name string `json:"name"`
-	}
+	server := startTestServer()
+	defer server.Close()
+
+	url := "http://localhost:12345/deleteme"
 
 	client, err := NewJSONClient()
 	assert.NoError(test, err)
 
-	response := Response{}
-	err = client.Get(url, &response)
+	err = client.Delete(url, nil)
 	assert.NoError(test, err)
-	assert.Equal(test, 103898330, response.ID)
-	assert.Equal(test, "utils", response.Name)
 }
 
 func TestFailJSONClientDeleteWithBadURL(test *testing.T) {
 	url := "http://this¤{I}sawierdstring"
-	type Response struct {
-		ID   int    `json:"id"`
-		Name string `json:"name"`
-	}
 
 	client, err := NewJSONClient()
 	assert.NoError(test, err)
 
-	response := Response{}
-	err = client.Get(url, &response)
+	err = client.Delete(url, nil)
 
 	assert.Error(test, err)
 	assert.Equal(test, "parse http://this¤{I}sawierdstring: invalid character \"{\" in host name", err.Error())
-	assert.Equal(test, 0, response.ID)
-	assert.Equal(test, "", response.Name)
+}
+
+func TestJSONClientPost(test *testing.T) {
+	server := startTestServer()
+	defer server.Close()
+
+	url := "http://localhost:12345/"
+
+	client, err := NewJSONClient()
+	assert.NoError(test, err)
+
+	type Request struct {
+		ID   int    `json:"id"`
+		Name string `json:"name"`
+	}
+
+	err = client.Post(url, Request{ID: 12345, Name: "A name"}, nil)
+	assert.NoError(test, err)
+}
+
+func TestFailJSONClientPostWithBadURL(test *testing.T) {
+	url := "http://this¤{I}sawierdstring"
+
+	client, err := NewJSONClient()
+	assert.NoError(test, err)
+
+	err = client.Post(url, nil, nil)
+
+	assert.Error(test, err)
+	assert.Equal(test, "parse http://this¤{I}sawierdstring: invalid character \"{\" in host name", err.Error())
+}
+
+func TestJSONClientPut(test *testing.T) {
+	server := startTestServer()
+	defer server.Close()
+
+	url := "http://localhost:12345/iexist"
+
+	client, err := NewJSONClient()
+	assert.NoError(test, err)
+
+	err = client.Put(url, nil, nil)
+	assert.NoError(test, err)
+}
+
+func TestFailJSONClientPutWithBadURL(test *testing.T) {
+	url := "http://this¤{I}sawierdstring"
+
+	client, err := NewJSONClient()
+	assert.NoError(test, err)
+
+	err = client.Put(url, nil, nil)
+
+	assert.Error(test, err)
+	assert.Equal(test, "parse http://this¤{I}sawierdstring: invalid character \"{\" in host name", err.Error())
 }
 
 func TestFailJSONClientGetWithInvalidDomainName(test *testing.T) {

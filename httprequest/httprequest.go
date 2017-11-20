@@ -3,7 +3,6 @@ package httprequest
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -80,7 +79,7 @@ func (client *JSONClient) sendRequest(request *http.Request, responseBody interf
 	}
 
 	buffer, _ := ioutil.ReadAll(response.Body)
-	fmt.Println(string(buffer))
+
 	if response.StatusCode < 200 || response.StatusCode > 299 {
 		err = HTTPError{
 			StatusCode:  response.StatusCode,
