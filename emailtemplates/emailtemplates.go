@@ -18,7 +18,7 @@ func (templates *Templates) Add(emailTemplate Template) {
 }
 
 // Render will generate and return the subject and body strings from a template
-func (templates *Templates) Render(name string, subjectData interface{}, bodyData interface{}) (result Email, err error) {
+func (templates *Templates) Render(name string, to string, subjectData interface{}, bodyData interface{}) (result Email, err error) {
 	var templateToRender *Template
 
 	for _, emailTemplate := range templates.templates {
@@ -46,7 +46,7 @@ func (templates *Templates) Render(name string, subjectData interface{}, bodyDat
 		return
 	}
 
-	result = Email{Subject: subject, Body: body}
+	result = Email{To: to, Subject: subject, Body: body}
 
 	return
 }
@@ -64,6 +64,7 @@ type Template struct {
 type Email struct {
 	Subject string `json:"subject"`
 	Body    string `json:"body"`
+	To      string `json:"to"`
 }
 
 // Compile will re-compile the template Subject and Body to templates

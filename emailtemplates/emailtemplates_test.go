@@ -20,7 +20,7 @@ func TestTemplatesRender(test *testing.T) {
 	data["ServiceURL"] = "https://internt.mojlighetsministeriet.se"
 	data["ResetToken"] = "e980ad6b-3b78-5579-804a-a3ec18798332"
 
-	result, err := templates.Render("newAccount", data, data)
+	result, err := templates.Render("newAccount", "test@mojlighetsministeriet.se", data, data)
 
 	assert.NoError(test, err)
 	assert.Equal(test, "Hi Anna! this is your new account.", result.Subject)
@@ -30,7 +30,7 @@ func TestTemplatesRender(test *testing.T) {
 func TestFailTemplatesRenderWithMissingTemplate(test *testing.T) {
 	templates := Templates{}
 
-	result, err := templates.Render("missingTemplate", nil, nil)
+	result, err := templates.Render("missingTemplate", "test@mojlighetsministeriet.se", nil, nil)
 
 	assert.Error(test, err)
 	assert.Equal(test, "Template missingTemplate is not registered", err.Error())
@@ -52,7 +52,7 @@ func TestFailTemplatesRenderWithInvalidSubjectTemplate(test *testing.T) {
 	data["ServiceURL"] = "https://internt.mojlighetsministeriet.se"
 	data["ResetToken"] = "e980ad6b-3b78-5579-804a-a3ec18798332"
 
-	result, err := templates.Render("newAccount", data, data)
+	result, err := templates.Render("newAccount", "test@mojlighetsministeriet.se", data, data)
 
 	assert.Error(test, err)
 	assert.Equal(test, "template: subject:1: unexpected bad character U+007B '{' in command", err.Error())
@@ -74,7 +74,7 @@ func TestFailTemplatesRenderWithInvalidBodyTemplate(test *testing.T) {
 	data["ServiceURL"] = "https://internt.mojlighetsministeriet.se"
 	data["ResetToken"] = "e980ad6b-3b78-5579-804a-a3ec18798332"
 
-	result, err := templates.Render("newAccount", data, data)
+	result, err := templates.Render("newAccount", "test@mojlighetsministeriet.se", data, data)
 
 	assert.Error(test, err)
 	assert.Equal(test, "template: body:1: unexpected bad character U+007B '{' in command", err.Error())
