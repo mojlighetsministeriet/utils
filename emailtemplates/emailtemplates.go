@@ -59,6 +59,11 @@ type Email struct {
 	To      string `json:"to"`
 }
 
+func stripSlashBeforeBrackets(input string) string {
+	input = strings.Replace(input, "\\{", "{", -1)
+	return strings.Replace(input, "\\}", "}", -1)
+}
+
 // Template lets you format emails with go templates
 type Template struct {
 	Name            string
@@ -70,12 +75,12 @@ type Template struct {
 
 // Compile will re-compile the template Subject and Body to templates
 func (emailTemplate *Template) Compile() (err error) {
-	emailTemplate.subjectTemplate, err = template.New("subject").Parse(strings.Replace(emailTemplate.Subject, "\\\"", "\"", -1))
+	emailTemplate.subjectTemplate, err = template.New("subject").Parse(stripSlashBeforeBrackets(emailTemplate.Subject))
 	if err != nil {
 		return
 	}
 
-	emailTemplate.bodyTemplate, err = template.New("body").Parse(strings.Replace(emailTemplate.Body, "\\\"", "\"", -1))
+	emailTemplate.bodyTemplate, err = template.New("body").Parse(stripSlashBeforeBrackets(emailTemplate.Body))
 	return
 }
 

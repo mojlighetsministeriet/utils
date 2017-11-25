@@ -81,3 +81,24 @@ func TestFailTemplatesRenderWithInvalidBodyTemplate(test *testing.T) {
 	assert.Equal(test, "", result.Subject)
 	assert.Equal(test, "", result.Body)
 }
+
+func TestTemplatesRenderWithEscapedPlaceholder(test *testing.T) {
+	templates := Templates{}
+	template := Template{
+		Name:    "newAccount",
+		Subject: "Hi \\{\\{.Name\\}\\}! this is your new account.",
+		Body:    "You have a new account, choose your password <a href=\"\\{{.ServiceURL}}/api/reset-password/{\\{.ResetToken}}\" target=\"_blank\">here</a>.",
+	}
+	templates.Add(template)
+
+	data := make(map[string]string)
+	data["Name"] = "Anna"
+	data["ServiceURL"] = "https://internt.mojlighetsministeriet.se"
+	data["ResetToken"] = "e980ad6b-3b78-5579-804a-a3ec18798332"
+
+	result, err := templates.Render("newAccount", "test@mojlighetsministeriet.se", data, data)
+
+	assert.NoError(test, err)
+	assert.Equal(test, "Hi Anna! this is your new account.", result.Subject)
+	assert.Equal(test, "You have a new account, choose your password <a href=\"https://internt.mojlighetsministeriet.se/api/reset-password/e980ad6b-3b78-5579-804a-a3ec18798332\" target=\"_blank\">here</a>.", result.Body)
+}
