@@ -3,6 +3,7 @@ package httprequest
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -12,14 +13,18 @@ import (
 	"github.com/mojlighetsministeriet/utils"
 )
 
-/*
+// Client extends http.Client by using structs and their validation tags for request/response data
+type Client struct {
+	http.Client
+}
+
 // NewClient creates a http client with timeouts set to 10 seconds and TLS config
-func NewClient() (*http.Client, error) {
+func NewClient() (*Client, error) {
 	return NewClientWithCustomTimeout(10000)
 }
 
 // NewClientWithCustomTimeout creates a http client as NewClient but allows to choosing the timeout in milliseconds
-func NewClientWithCustomTimeout(millisecondTimeout time.Duration) (client *http.Client, err error) {
+func NewClientWithCustomTimeout(millisecondTimeout time.Duration) (client *Client, err error) {
 	tlsConfig, err := utils.GetCACertificatesTLSConfig()
 	if err != nil {
 		return
@@ -33,14 +38,49 @@ func NewClientWithCustomTimeout(millisecondTimeout time.Duration) (client *http.
 		TLSClientConfig:     tlsConfig,
 	}
 
-	client = &http.Client{
-		Timeout:   time.Millisecond * millisecondTimeout,
-		Transport: transport,
+	client = &Client{
+		http.Client{
+			Timeout:   time.Millisecond * millisecondTimeout,
+			Transport: transport,
+		},
 	}
 
 	return
 }
-*/
+
+func (client *Client) sendRequest(request *http.Request) (responseBody io.Reader, err error) {
+	response, err := client.Client.Do(request)
+	if err != nil {
+		return
+	}
+
+	if response.StatusCode < 200 || response.StatusCode > 299 {
+		errorBody, _ := ioutil.ReadAll(response.Body)
+		err = HTTPError{
+			StatusCode:  response.StatusCode,
+			ContentType: response.Request.Header.Get("Content-Type"),
+			Body:        errorBody,
+		}
+
+		return
+	}
+
+	responseBody = response.Body
+
+	return
+}
+
+// Get sends a GET request and maps the response to a responseBody struct
+func (client *Client) Get(url string) (responseBody io.Reader, err error) {
+	request, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return
+	}
+
+	responseBody, err = client.sendRequest(request)
+
+	return
+}
 
 // HTTPError implements an error that retains some additional data about the response
 type HTTPError struct {
