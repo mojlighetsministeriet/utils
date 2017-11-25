@@ -3,7 +3,6 @@ package httprequest
 import (
 	"bytes"
 	"encoding/json"
-	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -48,7 +47,7 @@ func NewClientWithCustomTimeout(millisecondTimeout time.Duration) (client *Clien
 	return
 }
 
-func (client *Client) sendRequest(request *http.Request) (responseBody io.Reader, err error) {
+func (client *Client) sendRequest(request *http.Request) (responseBody []byte, err error) {
 	response, err := client.Client.Do(request)
 	if err != nil {
 		return
@@ -65,13 +64,15 @@ func (client *Client) sendRequest(request *http.Request) (responseBody io.Reader
 		return
 	}
 
-	responseBody = response.Body
+	buffer := new(bytes.Buffer)
+	buffer.ReadFrom(response.Body)
+	responseBody = buffer.Bytes()
 
 	return
 }
 
 // Get sends a GET request and maps the response to a responseBody struct
-func (client *Client) Get(url string) (responseBody io.Reader, err error) {
+func (client *Client) Get(url string) (responseBody []byte, err error) {
 	request, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return
