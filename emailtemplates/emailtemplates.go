@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"html/template"
+	"strings"
 )
 
 // Templates can hold templates
@@ -51,6 +52,13 @@ func (templates *Templates) Render(name string, to string, subjectData interface
 	return
 }
 
+// Email can hold the result of a rendered template
+type Email struct {
+	Subject string `json:"subject"`
+	Body    string `json:"body"`
+	To      string `json:"to"`
+}
+
 // Template lets you format emails with go templates
 type Template struct {
 	Name            string
@@ -60,21 +68,14 @@ type Template struct {
 	bodyTemplate    *template.Template
 }
 
-// Email can hold the result of a rendered template
-type Email struct {
-	Subject string `json:"subject"`
-	Body    string `json:"body"`
-	To      string `json:"to"`
-}
-
 // Compile will re-compile the template Subject and Body to templates
 func (emailTemplate *Template) Compile() (err error) {
-	emailTemplate.subjectTemplate, err = template.New("subject").Parse(emailTemplate.Subject)
+	emailTemplate.subjectTemplate, err = template.New("subject").Parse(strings.Replace(emailTemplate.Subject, "\\\"", "\"", -1))
 	if err != nil {
 		return
 	}
 
-	emailTemplate.bodyTemplate, err = template.New("body").Parse(emailTemplate.Body)
+	emailTemplate.bodyTemplate, err = template.New("body").Parse(strings.Replace(emailTemplate.Body, "\\\"", "\"", -1))
 	return
 }
 
