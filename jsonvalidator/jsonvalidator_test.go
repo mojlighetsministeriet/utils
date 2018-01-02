@@ -78,8 +78,11 @@ func TestFailValidateOnInvalidEmail(test *testing.T) {
 	user := User{Email: "testexample.com", Bio: "I'm a user that has an email."}
 	err := structValidator.Validate(user)
 	assert.Error(test, err)
-	assert.Equal(test, err.Code, 422)
-	assert.JSONEq(test, expectedOutput, string(err.Message.(ValidationErrors).JSON()))
+
+	errEcho, ok := err.(*echo.HTTPError)
+	assert.Equal(test, true, ok)
+	assert.Equal(test, errEcho.Code, 422)
+	assert.JSONEq(test, expectedOutput, string(errEcho.Message.(ValidationErrors).JSON()))
 }
 
 func TestFailValidateErrorMethodOnResult(test *testing.T) {
@@ -123,8 +126,11 @@ func TestFailValidateOnNestedStructure(test *testing.T) {
 	}
 	err := structValidator.Validate(car)
 	assert.Error(test, err)
-	assert.Equal(test, err.Code, 422)
-	assert.JSONEq(test, expectedOutput, string(err.Message.(ValidationErrors).JSON()))
+
+	errEcho, ok := err.(*echo.HTTPError)
+	assert.Equal(test, true, ok)
+	assert.Equal(test, errEcho.Code, 422)
+	assert.JSONEq(test, expectedOutput, string(errEcho.Message.(ValidationErrors).JSON()))
 }
 
 func TestFormatPath(test *testing.T) {

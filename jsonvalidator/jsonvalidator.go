@@ -104,7 +104,7 @@ type ValidatorEcho struct {
 }
 
 // Validate takes a struct and validates it according to the structs validate annotations
-func (validator *ValidatorEcho) Validate(input interface{}) (err *echo.HTTPError) {
+func (validator *ValidatorEcho) Validate(input interface{}) (err error) {
 	validationError := validator.Validator.Validate(input)
 	if validationError == nil {
 		return
