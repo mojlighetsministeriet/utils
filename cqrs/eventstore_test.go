@@ -41,7 +41,7 @@ func TestEventStorePersist(test *testing.T) {
 
 	event := BankAccountCreated{
 		Name:  "My account",
-		Owner: uuid.NewV4().String(),
+		Owner: uuid.Must(uuid.NewV4()).String(),
 		EventBase: cqrs.EventBase{
 			Type:           "BankAccountCreated",
 			Version:        1,

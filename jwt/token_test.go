@@ -36,7 +36,7 @@ func TestGenerateAndParseIfValid(test *testing.T) {
 	assert.NoError(test, err)
 
 	account := Account{
-		ID:    uuid.NewV4().String(),
+		ID:    uuid.Must(uuid.NewV4()).String(),
 		Email: "tech+testing@mojlighetsministerietest.se",
 		Roles: []string{"user"},
 	}
@@ -65,7 +65,7 @@ func TestFailParseIfValidWithBadPublicKey(test *testing.T) {
 	assert.NoError(test, err)
 
 	account := Account{
-		ID:    uuid.NewV4().String(),
+		ID:    uuid.Must(uuid.NewV4()).String(),
 		Email: "tech+testing@mojlighetsministerietest.se",
 		Roles: []string{"user"},
 	}
@@ -86,7 +86,7 @@ func TestGetClaimsFromContextIfValid(test *testing.T) {
 	assert.NoError(test, err)
 
 	account := Account{
-		ID:    uuid.NewV4().String(),
+		ID:    uuid.Must(uuid.NewV4()).String(),
 		Email: "tech+testing@mojlighetsministerietest.se",
 		Roles: []string{"user"},
 	}
@@ -110,7 +110,7 @@ func TestWithInvalidKeyFailToGetClaimsFromContextIfValid(test *testing.T) {
 	assert.NoError(test, err)
 
 	account := Account{
-		ID:    uuid.NewV4().String(),
+		ID:    uuid.Must(uuid.NewV4()).String(),
 		Email: "tech+testing@mojlighetsministerietest.se",
 		Roles: []string{"user"},
 	}

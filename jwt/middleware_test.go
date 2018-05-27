@@ -23,7 +23,7 @@ func TestGetTokenFromContext(test *testing.T) {
 	assert.NoError(test, err)
 
 	account := Account{
-		ID:    uuid.NewV4().String(),
+		ID:    uuid.Must(uuid.NewV4()).String(),
 		Email: "tech+testing@mojlighetsministerietest.se",
 		Roles: []string{"user"},
 	}
@@ -67,7 +67,7 @@ func TestRequiredRoleMiddlewareWhenMissingRequiredAdministratorRole(test *testin
 	assert.NoError(test, err)
 
 	account := Account{
-		ID:    uuid.NewV4().String(),
+		ID:    uuid.Must(uuid.NewV4()).String(),
 		Email: "tech+testing@mojlighetsministerietest.se",
 		Roles: []string{"user"},
 	}
@@ -94,7 +94,7 @@ func TestRequiredRoleMiddlewareWithRequiredAdministratorRole(test *testing.T) {
 	assert.NoError(test, err)
 
 	account := Account{
-		ID:    uuid.NewV4().String(),
+		ID:    uuid.Must(uuid.NewV4()).String(),
 		Email: "tech+testing@mojlighetsministerietest.se",
 		Roles: []string{"user", "administrator"},
 	}
@@ -123,7 +123,7 @@ func TestRequiredRoleMiddlewareWithInvalidTokenFormat(test *testing.T) {
 	claims := jws.Claims{}
 	claims.SetExpiration(time.Now().Add(time.Duration(60*20) * time.Second))
 
-	claims.SetSubject(uuid.NewV4().String())
+	claims.SetSubject(uuid.Must(uuid.NewV4()).String())
 	claims.Set("email", "email")
 
 	serializedToken, err := jws.NewJWT(claims, crypto.SigningMethodRS256).Serialize(privateKey)
