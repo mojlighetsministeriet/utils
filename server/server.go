@@ -19,6 +19,7 @@ type Server struct {
 type Route struct {
 	Path   string `json:"path"`
 	Method string `json:"method"`
+	Name   string `json:"name"`
 }
 
 type Routes []Route
@@ -66,6 +67,7 @@ func (server *Server) addHelpResource() {
 			registeredRoute := Route{
 				Path:   route.Path,
 				Method: route.Method,
+				Name:   route.Name,
 			}
 			registeredRoutes = append(registeredRoutes, registeredRoute)
 		}
