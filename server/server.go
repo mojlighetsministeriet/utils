@@ -2,6 +2,7 @@ package server
 
 import (
 	"net/http"
+	"sort"
 	"strings"
 
 	"github.com/gorilla/handlers"
@@ -13,6 +14,34 @@ import (
 type Server struct {
 	*echo.Echo
 	useTLS bool
+}
+
+type Route struct {
+	Path   string `json:"path"`
+	Method string `json:"method"`
+}
+
+type Routes []Route
+
+func (routes Routes) Sort() {
+	sorter := &routesSorter{routes: routes}
+	sort.Sort(sorter)
+}
+
+type routesSorter struct {
+	routes []Route
+}
+
+func (sorter *routesSorter) Len() int {
+	return len(sorter.routes)
+}
+
+func (sorter *routesSorter) Swap(i, j int) {
+	sorter.routes[i], sorter.routes[j] = sorter.routes[j], sorter.routes[i]
+}
+
+func (sorter *routesSorter) Less(i, j int) bool {
+	return sorter.routes[i].Path < sorter.routes[j].Path
 }
 
 func (server *Server) UseTLS() bool {
@@ -30,22 +59,19 @@ func (server *Server) Listen(address string) {
 }
 
 func (server *Server) addHelpResource() {
-	type routeInfo struct {
-		Path   string `json:"path"`
-		Method string `json:"method"`
-	}
-
-	var registeredRoutes []routeInfo
+	var registeredRoutes Routes
 
 	for _, route := range server.Routes() {
 		if !strings.HasSuffix(route.Path, "/*") {
-			registeredRoute := routeInfo{
+			registeredRoute := Route{
 				Path:   route.Path,
 				Method: route.Method,
 			}
 			registeredRoutes = append(registeredRoutes, registeredRoute)
 		}
 	}
+
+	registeredRoutes.Sort()
 
 	server.GET("/help", func(context echo.Context) error {
 		return context.JSON(http.StatusOK, registeredRoutes)
