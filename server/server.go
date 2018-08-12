@@ -17,9 +17,9 @@ type Server struct {
 }
 
 type Route struct {
-	Path   string `json:"path"`
-	Method string `json:"method"`
-	Name   string `json:"name"`
+	Path   string `json:"path,omitempty"`
+	Method string `json:"method,omitempty"`
+	Name   string `json:"name,omitempty"`
 }
 
 type Routes []Route
