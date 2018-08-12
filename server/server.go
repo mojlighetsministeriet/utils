@@ -50,7 +50,7 @@ func (server *Server) UseTLS() bool {
 }
 
 func (server *Server) Listen(address string) {
-	server.addHelpResource()
+	server.addHelpResourceIfMissing()
 
 	if server.useTLS {
 		server.Logger.Fatal(server.StartAutoTLS(address))
@@ -59,8 +59,9 @@ func (server *Server) Listen(address string) {
 	}
 }
 
-func (server *Server) addHelpResource() {
+func (server *Server) addHelpResourceIfMissing() {
 	var registeredRoutes Routes
+	helpIsMissing := true
 
 	for _, route := range server.Routes() {
 		if !strings.HasSuffix(route.Path, "/*") {
@@ -71,13 +72,19 @@ func (server *Server) addHelpResource() {
 			}
 			registeredRoutes = append(registeredRoutes, registeredRoute)
 		}
+
+		if route.Method == "GET" && route.Path == "/help" {
+			helpIsMissing = false
+		}
 	}
 
-	registeredRoutes.Sort()
+	if helpIsMissing {
+		registeredRoutes.Sort()
 
-	server.GET("/help", func(context echo.Context) error {
-		return context.JSON(http.StatusOK, registeredRoutes)
-	})
+		server.GET("/help", func(context echo.Context) error {
+			return context.JSON(http.StatusOK, registeredRoutes)
+		})
+	}
 }
 
 func NewServer(useTLS bool, behindProxy bool, bodyLimit string) *Server {
