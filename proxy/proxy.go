@@ -15,6 +15,8 @@ func setResponseHeaders(destination, source http.Header) {
 			destination.Add(key, value)
 		}
 	}
+
+	destination.Del("Content-Length")
 }
 
 func setProxyRequestHeaders(destination http.Header, sourceContext echo.Context) {
