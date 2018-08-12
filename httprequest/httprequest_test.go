@@ -183,7 +183,7 @@ func TestFailJSONClientGetWithInvalidDomainName(test *testing.T) {
 	err = client.Get(url, &response)
 
 	assert.Error(test, err)
-	assert.Equal(test, "Get https://adomainthatdoesnotexist: dial tcp: lookup adomainthatdoesnotexist: no such host", err.Error())
+	assert.Equal(test, "Get https://adomainthatdoesnotexist: dial tcp: lookup adomainthatdoesnotexist: No address associated with hostname", err.Error())
 	assert.Equal(test, 0, response.ID)
 	assert.Equal(test, "", response.Name)
 }
