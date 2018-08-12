@@ -2,6 +2,7 @@ package httprequest
 
 import (
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/labstack/echo"
@@ -183,7 +184,7 @@ func TestFailJSONClientGetWithInvalidDomainName(test *testing.T) {
 	err = client.Get(url, &response)
 
 	assert.Error(test, err)
-	assert.Equal(test, "Get https://adomainthatdoesnotexist: dial tcp: lookup adomainthatdoesnotexist: No address associated with hostname", err.Error())
+	assert.Equal(test, strings.HasPrefix(err.Error(), "Get https://adomainthatdoesnotexist: dial tcp: lookup adomainthatdoesnotexist"), true)
 	assert.Equal(test, 0, response.ID)
 	assert.Equal(test, "", response.Name)
 }
