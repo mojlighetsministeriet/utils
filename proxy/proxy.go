@@ -28,6 +28,8 @@ func setProxyRequestHeaders(destination http.Header, sourceContext echo.Context)
 		}
 	}
 
+	destination.Del("Content-Length")
+
 	destination.Add("X-Forwarded-For", sourceContext.RealIP())
 
 	if destination.Get("X-Forwarded-Host") == "" {
