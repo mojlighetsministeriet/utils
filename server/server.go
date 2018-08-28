@@ -102,7 +102,8 @@ func NewServer(useTLS bool, behindProxy bool, bodyLimit string) *Server {
 	if behindProxy {
 		server.Use(echo.WrapMiddleware(handlers.ProxyHeaders))
 	} else {
-		server.Use(middleware.Gzip())
+		// Gzip causes problem for the proxied streamed requests, so mixin is disabled for now.
+		//server.Use(middleware.Gzip())
 		server.Use(middleware.CSRFWithConfig(middleware.CSRFConfig{
 			Skipper: func(context echo.Context) bool {
 				sessionCookie, err := context.Cookie("session")
